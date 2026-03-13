@@ -10,7 +10,9 @@ const NOTION_DB_ID = "fb6f8473e9484de8a47839c7e0c34ddd";
 const NOTION_BASE  = "/notion-proxy/v1";
 
 const notionFetch = async (path, method="GET", body=null) => {
-  const opts = { method, headers:{"Content-Type":"application/json"} };
+  const cfg = JSON.parse(localStorage.getItem("cs_cfg_v8")||"{}" );
+  const token = cfg.notionToken || "";
+  const opts = { method, headers:{"Content-Type":"application/json","X-Notion-Token":token} };
   if(body) opts.body = JSON.stringify(body);
   const r = await fetch(NOTION_BASE+path, opts);
   if(!r.ok){const e=await r.json().catch(()=>({}));throw new Error(e.message||`${r.status}`);}
@@ -844,6 +846,35 @@ const Buscar = ({accounts,countries,dark,onStatusChange,onDelete,onEdit,onSoldTo
   </div>;
 };
 
+const NotionTokenInput = ({notionOk}) => {
+  const cfg = JSON.parse(localStorage.getItem("cs_cfg_v8")||"{}" );
+  const [tok, setTok] = useState(cfg.notionToken||"");
+  const [saved, setSaved] = useState(false);
+
+  const save = () => {
+    const c = JSON.parse(localStorage.getItem("cs_cfg_v8")||"{}" );
+    c.notionToken = tok.trim();
+    localStorage.setItem("cs_cfg_v8", JSON.stringify(c));
+    setSaved(true);
+    setTimeout(()=>setSaved(false), 2000);
+    window.location.reload();
+  };
+
+  return <div style={{display:"flex",gap:8,alignItems:"center"}}>
+    <input
+      className="fin mono"
+      type="password"
+      placeholder="ntn_... o secret_..."
+      value={tok}
+      onChange={e=>{setTok(e.target.value);setSaved(false);}}
+      style={{flex:1,fontSize:12}}
+    />
+    <button className="bp" style={{width:"auto",padding:"11px 14px",flexShrink:0}} onClick={save}>
+      {saved ? "✓" : "Guardar"}
+    </button>
+  </div>;
+};
+
 const Ajustes = ({dark,setDark,countries,setCountries,cats,setCats,notionOk,aiProviders,setAiProviders,activeAIId,setActiveAIId}) => {
   const [nc,setNc]=useState({flag:"",name:""}), [ncat,setNcat]=useState("");
   const [editProv,setEditProv]=useState(null);
@@ -862,12 +893,15 @@ const Ajustes = ({dark,setDark,countries,setCountries,cats,setCats,notionOk,aiPr
     <div style={{padding:"0 20px"}}>
 
       {/* Notion */}
-      <div className="card fu" style={{marginBottom:16,borderColor:notionOk?"rgba(0,229,229,.3)":"rgba(255,59,92,.25)"}}>
-        <div style={{display:"flex",alignItems:"center",gap:10}}>
+      <div style={{fontWeight:700,fontSize:10,color:"var(--t2)",letterSpacing:.8,textTransform:"uppercase",marginBottom:10}}>Notion</div>
+      <div className="card fu" style={{marginBottom:10,borderColor:notionOk?"rgba(0,229,229,.3)":"rgba(255,59,92,.25)"}}>
+        <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:12}}>
           <span className={"ndot"+(notionOk?"":" off")}/>
           <div><div style={{fontWeight:700,fontSize:14}}>Notion {notionOk?"✓ Conectado":"Desconectado"}</div>
-            <div style={{fontSize:12,color:"var(--t2)",marginTop:2}}>{notionOk?"Base de datos sincronizada":"Revisar token en server.js"}</div></div>
+            <div style={{fontSize:12,color:"var(--t2)",marginTop:2}}>{notionOk?"Base de datos sincronizada":"Ingresa tu token de integración"}</div></div>
         </div>
+        <label className="fl">Token de integración</label>
+        <NotionTokenInput notionOk={notionOk}/>
       </div>
 
       {/* IA */}
