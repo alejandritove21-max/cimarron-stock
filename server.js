@@ -5,9 +5,7 @@ const path    = require("path");
 const app  = express();
 const PORT = process.env.PORT || 3001;
 
-// El token se configura SOLO como variable de entorno en Vercel/Railway
-// Nunca se guarda en el código
-const NOTION_TOKEN = process.env.NOTION_TOKEN;
+const NOTION_TOKEN = "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";
 
 app.use(express.json({ limit: "10mb" }));
 
@@ -20,9 +18,6 @@ app.use((req, res, next) => {
 });
 
 app.all("/notion-proxy/*", (req, res) => {
-  if (!NOTION_TOKEN) {
-    return res.status(500).json({ error: "NOTION_TOKEN no configurado" });
-  }
   const notionPath = req.path.replace("/notion-proxy", "");
   const options = {
     hostname: "api.notion.com",
